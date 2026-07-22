@@ -27,14 +27,14 @@ jobs:
           "https://api.twitch.tv/helix/streams?user_login=Razerkatt")
 
           if echo "$RESPONSE" | grep -q '"data":\[\]'; then
-  echo "@Razerkatt's stream is currently offline." > record.txt
-else
-  echo "Current stream: 0W-0L | ±0 RR" > record.txt
-fi
+            echo "@Razerkatt's stream is currently offline." > record.txt
+          else
+            echo "Current stream: 0W-0L | ±0 RR" > record.txt
+          fi
 
-git config user.name "github-actions"
-git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
 
-git add record.txt
-git commit -m "Update stream record" || exit 0
-git push
+          git add record.txt
+          git commit -m "Update stream record" || exit 0
+          git push
