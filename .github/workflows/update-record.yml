@@ -18,4 +18,12 @@ jobs:
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
           TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
         run: |
-          echo "Checking stream status..."
+          TOKEN=$(curl -X POST \
+          "https://id.twitch.tv/oauth2/token?client_id=$TWITCH_CLIENT_ID&client_secret=$TWITCH_CLIENT_SECRET&grant_type=client_credentials" \
+          | jq -r '.access_token')
+
+          RESPONSE=$(curl -H "Client-ID: $TWITCH_CLIENT_ID" \
+          -H "Authorization: Bearer $TOKEN" \
+          "https://api.twitch.tv/helix/streams?user_login=Razerkatt")
+
+          echo "$RESPONSE"
