@@ -21,37 +21,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Check Twitch status
-        env:
-          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
-          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
-        run: |
-          TOKEN=$(curl -X POST \
-          "https://id.twitch.tv/oauth2/token?client_id=$TWITCH_CLIENT_ID&client_secret=$TWITCH_CLIENT_SECRET&grant_type=client_credentials" \
-          | jq -r '.access_token')
-
-          RESPONSE=$(curl -H "Client-ID: $TWITCH_CLIENT_ID" \
-          -H "Authorization: Bearer $TOKEN" \
-          "https://api.twitch.tv/helix/streams?user_login=Razerkatt")
-
-          if echo "$RESPONSE" | grep -q '"data":\[\]'; then
-            echo "@Razerkatt's stream is currently offline." > record.txt
-          else
-            echo "Razerkatt has a record of 0W-0L-0D and is even 0RR this stream." > record.txt
-          fi
-
-      - name: Test Valorant API
-        env:
-          HENRIK_API_KEY: ${{ secrets.HENRIK_API_KEY }}
-        run: |
-          RESPONSE=$(curl -H "Authorization: $HENRIK_API_KEY" \
-          "https://api.henrikdev.xyz/valorant/v1/account/razerkatt/0101")
-
-          echo "$RESPONSE"
-
       - name: Run Valorant Tracker
         env:
           HENRIK_API_KEY: ${{ secrets.HENRIK_API_KEY }}
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
         run: |
           pip install requests
           python tracker.py
