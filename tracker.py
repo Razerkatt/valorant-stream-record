@@ -1,18 +1,20 @@
 import os
 import json
 import requests
+from datetime import datetime, timezone
 
-API_KEY = os.environ["HENRIK_API_KEY"]
+HENRIK_API_KEY = os.environ["HENRIK_API_KEY"]
+
+TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
+TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 
 PUUID = "223f6f3c-d8e6-53fc-9e02-394e87e51883"
+
+TWITCH_USERNAME = "razerkatt"
 REGION = "na"
 
 DATA_FILE = "stream_data.json"
 RECORD_FILE = "record.txt"
-
-headers = {
-    "Authorization": API_KEY
-}
 
 
 def load_data():
@@ -25,42 +27,89 @@ def save_data(data):
         json.dump(data, file, indent=2)
 
 
+def get_twitch_token():
+    response = requests.post(
+        "https://id.twitch.tv/oauth2/token",
+        params={
+            "client_id": TWITCH_CLIENT_ID,
+            "client_secret": TWITCH_CLIENT_SECRET,
+            "grant_type": "client_credentials"
+        }
+    )
+
+    return response.json()["access_token"]
+
+
+def get_stream():
+    token = get_twitch_token()
+
+    response = requests.get(
+        f"https://api.twitch.tv/helix/streams?user_login={TWITCH_USERNAME}",
+        headers={
+            "Client-ID": TWITCH_CLIENT_ID,
+            "Authorization": f"Bearer {token}"
+        }
+    )
+
+    data = response.json()["data"]
+
+    if len(data) == 0:
+        return None
+
+    return data[0]
+
+
+def reset_stream(data, start_time):
+    data["live"] = True
+    data["stream_start_time"] = start_time
+    data["wins"] = 0
+    data["losses"] = 0
+    data["draws"] = 0
+    data["rr"] = 0
+    data["current_streak"] = ""
+    data["streak_count"] = 0
+    data["matches"] = []
+
+
 def get_matches():
-    url = f"https://api.henrikdev.xyz/valorant/v3/by-puuid/matches/{REGION}/{PUUID}"
-    response = requests.get(url, headers=headers)
+    response = requests.get(
+        f"https://api.henrikdev.xyz/valorant/v3/by-puuid/matches/{REGION}/{PUUID}",
+        headers={
+            "Authorization": HENRIK_API_KEY
+        }
+    )
+
     return response.json()["data"]
 
 
 def get_rr_history():
-    url = f"https://api.henrikdev.xyz/valorant/v1/by-puuid/mmr-history/{REGION}/{PUUID}"
-    response = requests.get(url, headers=headers)
+    response = requests.get(
+        f"https://api.henrikdev.xyz/valorant/v1/by-puuid/mmr-history/{REGION}/{PUUID}",
+        headers={
+            "Authorization": HENRIK_API_KEY
+        }
+    )
+
     return response.json()["data"]
 
 
 def get_result(match):
-    players = match["players"]["all_players"]
 
-    me = None
-
-    for player in players:
+    for player in match["players"]["all_players"]:
         if player["puuid"] == PUUID:
-            me = player
+            team = player["team"]
             break
-
-    if me is None:
+    else:
         return None
 
-    my_team = me["team"]
-
-    teams = match["teams"]
-
-    if teams[my_team.lower()]["has_won"]:
+    if match["teams"][team.lower()]["has_won"]:
         return "win"
 
     return "loss"
 
 
 def update_streak(data, result):
+
     if data["current_streak"] == result:
         data["streak_count"] += 1
     else:
@@ -98,13 +147,41 @@ def create_message(data):
 
 data = load_data()
 
-matches = get_matches()
+stream = get_stream()
+
+if stream is None:
+
+    data["live"] = False
+    save_data(data)
+
+    with open(RECORD_FILE, "w") as file:
+        file.write("@razerkatt's stream is currently offline.")
+
+    exit()
+
+
+stream_start = stream["started_at"]
+
+start_time = int(
+    datetime.fromisoformat(
+        stream_start.replace("Z", "+00:00")
+    ).timestamp()
+)
+
+
+if not data["live"] or data["stream_start_time"] != start_time:
+    reset_stream(data, start_time)
+
+
 rr_history = get_rr_history()
 
 rr_lookup = {}
 
 for game in rr_history:
     rr_lookup[game["match_id"]] = game["mmr_change_to_last_game"]
+
+
+matches = get_matches()
 
 
 for match in matches:
@@ -117,10 +194,10 @@ for match in matches:
     if match["metadata"]["mode_id"] != "competitive":
         continue
 
-    result = get_result(match)
-
-    if result is None:
+    if match["metadata"]["game_start"] < start_time:
         continue
+
+    result = get_result(match)
 
     if result == "win":
         data["wins"] += 1
