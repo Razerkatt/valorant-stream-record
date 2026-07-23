@@ -1,0 +1,10 @@
+{
+  "live": false,
+  "wins": 0,
+  "losses": 0,
+  "draws": 0,
+  "rr": 0,
+  "current_streak": "",
+  "streak_count": 0,
+  "matches": []
+}
