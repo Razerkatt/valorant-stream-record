@@ -73,21 +73,21 @@ def create_message(data):
     rr = data["rr"]
 
     if rr > 0:
-        rr_text = f"is up {rr}RR"
+        rr_text = f"is currently up {rr}RR"
     elif rr < 0:
-        rr_text = f"is down {abs(rr)}RR"
+        rr_text = f"is currently down {abs(rr)}RR"
     else:
-        rr_text = "is even 0RR"
+        rr_text = "is currently even at 0RR"
 
     message = (
         f"Razerkatt has a record of "
-        f"{data['wins']}W-{data['losses']}L-{data['draws']}D, "
+        f"{data['wins']}W-{data['losses']}L-{data['draws']}D and "
         f"{rr_text}"
     )
 
     if data["streak_count"] >= 2:
         message += (
-            f", and is on a {data['streak_count']} game "
+            f", on a {data['streak_count']} game "
             f"{data['current_streak']} streak this stream."
         )
     else:
@@ -117,25 +117,20 @@ for match in matches:
     if match["metadata"]["mode_id"] != "competitive":
         continue
 
-
     result = get_result(match)
 
     if result is None:
         continue
-
 
     if result == "win":
         data["wins"] += 1
     else:
         data["losses"] += 1
 
-
     update_streak(data, result)
-
 
     if match_id in rr_lookup:
         data["rr"] += rr_lookup[match_id]
-
 
     data["matches"].append(match_id)
 
