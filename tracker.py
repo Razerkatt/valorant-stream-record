@@ -11,7 +11,7 @@ headers = {
 }
 
 response = requests.get(
-    f"https://api.henrikdev.xyz/valorant/v3/by-puuid/matches/na/{PUUID}",
+    f"https://api.henrikdev.xyz/valorant/v1/by-puuid/mmr-history/na/{PUUID}",
     headers=headers
 )
 
