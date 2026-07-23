@@ -16,6 +16,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Check Twitch status
         env:
           TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
@@ -32,7 +37,7 @@ jobs:
           if echo "$RESPONSE" | grep -q '"data":\[\]'; then
             echo "@Razerkatt's stream is currently offline." > record.txt
           else
-            echo "Current stream: 0W-0L | ±0 RR" > record.txt
+            echo "Razerkatt has a record of 0W-0L-0D and is even 0RR this stream." > record.txt
           fi
 
       - name: Test Valorant API
@@ -44,10 +49,17 @@ jobs:
 
           echo "$RESPONSE"
 
+      - name: Run Valorant Tracker
+        env:
+          HENRIK_API_KEY: ${{ secrets.HENRIK_API_KEY }}
+        run: |
+          pip install requests
+          python tracker.py
+
       - name: Save record
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add record.txt
+          git add record.txt stream_data.json
           git commit -m "Update stream record" || exit 0
           git push
