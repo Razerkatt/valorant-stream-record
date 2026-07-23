@@ -5,6 +5,9 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   update-record:
     runs-on: ubuntu-latest
@@ -32,9 +35,19 @@ jobs:
             echo "Current stream: 0W-0L | ±0 RR" > record.txt
           fi
 
+      - name: Test Valorant API
+        env:
+          HENRIK_API_KEY: ${{ secrets.HENRIK_API_KEY }}
+        run: |
+          RESPONSE=$(curl -H "Authorization: $HENRIK_API_KEY" \
+          "https://api.henrikdev.xyz/valorant/v1/account/razerkatt/0101")
+
+          echo "$RESPONSE"
+
+      - name: Save record
+        run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-
           git add record.txt
           git commit -m "Update stream record" || exit 0
           git push
