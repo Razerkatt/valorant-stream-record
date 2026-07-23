@@ -1,14 +1,11 @@
 {
   "live": false,
-  "wins": 1,
-  "losses": 2,
+  "stream_start_time": null,
+  "wins": 0,
+  "losses": 0,
   "draws": 0,
-  "rr": -28,
-  "current_streak": "loss",
-  "streak_count": 1,
-  "matches": [
-    "d7537e77-41c9-446f-83ce-5b6c458a0c9c",
-    "e934fea1-f65e-415a-be8b-d7351386fa72",
-    "d8f4c67c-9f2c-4ceb-970b-e092a1101dc2"
-  ]
+  "rr": 0,
+  "current_streak": "",
+  "streak_count": 0,
+  "matches": []
 }
