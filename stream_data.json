@@ -1,11 +1,13 @@
 {
   "live": true,
   "stream_start_time": 1784955619,
-  "wins": 0,
+  "wins": 1,
   "losses": 0,
   "draws": 0,
-  "rr": 0,
-  "current_streak": "",
-  "streak_count": 0,
-  "matches": []
+  "rr": 13,
+  "current_streak": "win",
+  "streak_count": 1,
+  "matches": [
+    "3cb9bf94-509a-4d69-bb79-f6ce4c4b2113"
+  ]
 }
