@@ -60,6 +60,8 @@ def get_stream():
 
 
 def reset_stream(data, start_time):
+    print("New stream detected. Resetting stream stats.")
+
     data["live"] = True
     data["stream_start_time"] = start_time
     data["wins"] = 0
@@ -100,6 +102,7 @@ def get_result(match):
             team = player["team"]
             break
     else:
+        print("Could not find player in match.")
         return None
 
     if match["teams"][team.lower()]["has_won"]:
@@ -145,11 +148,18 @@ def create_message(data):
     return message
 
 
+print("=" * 60)
+print(f"Tracker started at {datetime.now(timezone.utc).isoformat()}")
+print("=" * 60)
+
+
 data = load_data()
 
 stream = get_stream()
 
 if stream is None:
+
+    print("Stream is offline.")
 
     data["live"] = False
     save_data(data)
@@ -173,6 +183,8 @@ if not data["live"] or data["stream_start_time"] != start_time:
     reset_stream(data, start_time)
 
 
+print("Getting RR history...")
+
 rr_history = get_rr_history()
 
 rr_lookup = {}
@@ -181,21 +193,35 @@ for game in rr_history:
     rr_lookup[game["match_id"]] = game["mmr_change_to_last_game"]
 
 
+print(f"RR history entries found: {len(rr_lookup)}")
+
+
+print("Getting matches...")
+
 matches = get_matches()
+
+print(f"Henrik returned {len(matches)} matches.")
 
 
 for match in matches:
 
     match_id = match["metadata"]["matchid"]
 
+    print(f"Checking match {match_id}")
+
     if match_id in data["matches"]:
+        print(f"Skipping {match_id}: already processed")
         continue
 
     if match["metadata"]["mode_id"] != "competitive":
+        print(f"Skipping {match_id}: not competitive")
         continue
 
     if match["metadata"]["game_start"] < start_time:
+        print(f"Skipping {match_id}: before stream started")
         continue
+
+    print(f"Processing NEW match {match_id}")
 
     result = get_result(match)
 
@@ -207,7 +233,10 @@ for match in matches:
     update_streak(data, result)
 
     if match_id in rr_lookup:
+        print(f"RR change detected: {rr_lookup[match_id]}")
         data["rr"] += rr_lookup[match_id]
+    else:
+        print(f"No RR history found for {match_id}")
 
     data["matches"].append(match_id)
 
@@ -215,8 +244,13 @@ for match in matches:
 save_data(data)
 
 
+message = create_message(data)
+
 with open(RECORD_FILE, "w") as file:
-    file.write(create_message(data))
+    file.write(message)
 
 
-print(create_message(data))
+print("------------------------------------")
+print(message)
+print("Tracker finished successfully.")
+print("------------------------------------")
